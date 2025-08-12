@@ -522,8 +522,8 @@ This project demonstrates the application of SQL skills in creating and managing
 
 This project showcases SQL skills essential for database management and analysis. For more content on SQL and data analysis, connect with me through the following channels:
 
-- **E mail**:(vishalkhatri1812@gmail.com)
-- **LinkedIn**:(https://www.linkedin.com/in/vishalkhatri1812)
+- **E mail**:vishalkhatri1812@gmail.com
+- **LinkedIn**: https://www.linkedin.com/in/vishalkhatri1812
   
 
 Thank you for your interest in this project!
