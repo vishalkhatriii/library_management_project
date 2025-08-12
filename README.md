@@ -8,7 +8,7 @@
 
 This project demonstrates the implementation of a Library Management System using SQL. It includes creating and managing tables, performing CRUD operations, and executing advanced SQL queries. The goal is to showcase skills in database design, manipulation, and querying.
 
-![Library_project](https://github.com/najirh/Library-System-Management---P2/blob/main/library.jpg)
+
 
 ## Objectives
 
@@ -20,7 +20,7 @@ This project demonstrates the implementation of a Library Management System usin
 ## Project Structure
 
 ### 1. Database Setup
-![ERD](https://github.com/najirh/Library-System-Management---P2/blob/main/library_erd.png)
+
 
 - **Database Creation**: Created a database named `library_db`.
 - **Table Creation**: Created tables for branches, employees, members, books, issued status, and return status. Each table includes relevant columns and relationships.
@@ -404,13 +404,10 @@ JOIN
 branch as b
 ON e.branch_id = b.branch_id
 GROUP BY 1, 2
-```
-
-**Task 18: Identify Members Issuing High-Risk Books**  
-Write a query to identify members who have issued books more than twice with the status "damaged" in the books table. Display the member name, book title, and the number of times they've issued damaged books.    
+```    
 
 
-**Task 19: Stored Procedure**
+**Task 18: Stored Procedure**
 Objective:
 Create a stored procedure to manage the status of books in a library system.
 Description:
@@ -422,72 +419,97 @@ If the book is not available (status = 'no'), the procedure should return an err
 
 ```sql
 
-CREATE OR REPLACE PROCEDURE issue_book(p_issued_id VARCHAR(10), p_issued_member_id VARCHAR(30), p_issued_book_isbn VARCHAR(30), p_issued_emp_id VARCHAR(10))
+CREATE OR REPLACE PROCEDURE issue_book(p_issued_id VARCHAR(15), p_issued_member_id VARCHAR(15), p_issued_book_isbn VARCHAR(50), p_issued_emp_id VARCHAR(15))
 LANGUAGE plpgsql
 AS $$
 
-DECLARE
--- all the variabable
-    v_status VARCHAR(10);
+DECLARE -- all the variables are being declared here 
 
-BEGIN
--- all the code
-    -- checking if book is available 'yes'
-    SELECT 
-        status 
-        INTO
-        v_status
-    FROM books
-    WHERE isbn = p_issued_book_isbn;
-
-    IF v_status = 'yes' THEN
-
-        INSERT INTO issued_status(issued_id, issued_member_id, issued_date, issued_book_isbn, issued_emp_id)
-        VALUES
-        (p_issued_id, p_issued_member_id, CURRENT_DATE, p_issued_book_isbn, p_issued_emp_id);
-
-        UPDATE books
-            SET status = 'no'
-        WHERE isbn = p_issued_book_isbn;
-
-        RAISE NOTICE 'Book records added successfully for book isbn : %', p_issued_book_isbn;
+	v_status VARCHAR(10);
 
 
-    ELSE
-        RAISE NOTICE 'Sorry to inform you the book you have requested is unavailable book_isbn: %', p_issued_book_isbn;
-    END IF;
+BEGIN -- all the logic and code
+
+	SELECT status                       -- checking if book is available, status = 'yes'
+	INTO
+	v_status
+	FROM books
+	WHERE isbn = p_issued_book_isbn;
+
+
+	IF v_status ='yes' THEN
+		INSERT INTO issued_status (issued_id, issued_member_id, issued_date, issued_book_isbn, issued_emp_id)
+		VALUES
+		(p_issued_id, p_issued_member_id, CURRENT_DATE, p_issued_book_isbn, p_issued_emp_id);
+
+		
+		UPDATE books
+		SET status = 'no'
+		WHERE isbn = p_issued_book_isbn;
+
+		RAISE NOTICE 'Book record added successfully for the book isbn : %', p_issued_book_isbn;
+	
+
+	ELSE
+		RAISE NOTICE 'Sorry to inform you the book you have requested is unavaialable book_isbn : %',  p_issued_book_isbn;
+
+	END IF
+	;
+
 END;
 $$
 
--- Testing The function
+-- Testing Functions
+isbn = '978-0-451-52994-2' -- status 'no'
+issued_id = 'IS130' -- manually type
+issued_member_id 'C106' -- manually type
+issued_emp_id = 'E101'
+
+isbn = '978-0-330-25864-8' -- status 'yes'
+issued_id = 'IS140' -- manually type
+issued_member_id 'C110' -- manually type
+issued_emp_id = 'E102'
+
 SELECT * FROM books;
--- "978-0-553-29698-2" -- yes
--- "978-0-375-41398-8" -- no
-SELECT * FROM issued_status;
 
-CALL issue_book('IS155', 'C108', '978-0-553-29698-2', 'E104');
-CALL issue_book('IS156', 'C108', '978-0-375-41398-8', 'E104');
+SELECT * FROM issued_status
+WHERE issued_book_isbn = '978-0-330-25864-8';
 
-SELECT * FROM books
-WHERE isbn = '978-0-375-41398-8'
+
+
+-- Calling the function, CALL issue_book(p_issued_id, p_issued_member_id, CURRENT_DATE, p_issued_book_isbn, p_issued_emp_id)
+
+CALL issue_book ('IS145', 'C110', '978-0-451-52994-2', 'E101'); -- status ='no'
+
+CALL issue_book ('IS144', 'C108', '978-0-330-25864-8', 'E102'); -- status ='yes' and it will change to 'no' as book have been issued
+
+
 
 ```
 
 
 
-**Task 20: Create Table As Select (CTAS)**
+**Task 19: Create Table As Select (CTAS)**
 Objective: Create a CTAS (Create Table As Select) query to identify overdue books and calculate fines.
 
-Description: Write a CTAS query to create a new table that lists each member and the books they have issued but not returned within 30 days. The table should include:
-    The number of overdue books.
-    The total fines, with each day's fine calculated at $0.50.
-    The number of books issued by each member.
-    The resulting table should show:
-    Member ID
-    Number of overdue books
-    Total fines
+```
+CREATE TABLE overdue_books 
+AS
+SELECT
+	ist.issued_id,
+	ist.issued_book_isbn,
+	b.book_title,
+	ist.issued_date,
+	CURRENT_DATE as check_date,
+	(CURRENT_DATE - ist.issued_date) as days_out,
+	GREATEST ((CURRENT_DATE - ist.issued_date) - 30, 0) as overdue_days,
+	GREATEST ((CURRENT_DATE - ist.issued_date) - 30, 0) * 0.50 as overdue_amount
+FROM issued_status as ist
+JOIN books as b
+ON b.isbn = ist.issued_book_isbn
+WHERE (CURRENT_DATE - ist.issued_date) > 30;
 
-
+```
 
 ## Reports
 
@@ -499,24 +521,12 @@ Description: Write a CTAS query to create a new table that lists each member and
 
 This project demonstrates the application of SQL skills in creating and managing a library management system. It includes database setup, data manipulation, and advanced querying, providing a solid foundation for data management and analysis.
 
-## How to Use
-
-1. **Clone the Repository**: Clone this repository to your local machine.
-   ```sh
-   git clone https://github.com/najirh/Library-System-Management---P2.git
-   ```
-
-2. **Set Up the Database**: Execute the SQL scripts in the `database_setup.sql` file to create and populate the database.
-3. **Run the Queries**: Use the SQL queries in the `analysis_queries.sql` file to perform the analysis.
-4. **Explore and Modify**: Customize the queries as needed to explore different aspects of the data or answer additional questions.
-
-## Author - Zero Analyst
+## Author - Vishal Khatri
 
 This project showcases SQL skills essential for database management and analysis. For more content on SQL and data analysis, connect with me through the following channels:
 
-- **YouTube**: [Subscribe to my channel for tutorials and insights](https://www.youtube.com/@zero_analyst)
-- **Instagram**: [Follow me for daily tips and updates](https://www.instagram.com/zero_analyst/)
-- **LinkedIn**: [Connect with me professionally](https://www.linkedin.com/in/najirr)
-- **Discord**: [Join our community for learning and collaboration](https://discord.gg/36h5f2Z5PK)
+- **E mail**:(vishalkhatri1812@gmail.com)
+- **LinkedIn**:(https://www.linkedin.com/in/vishalkhatri1812)
+  
 
 Thank you for your interest in this project!
