@@ -341,30 +341,27 @@ CALL add_return_records('RS148', 'IS140', 'Good');
 Create a query that generates a performance report for each branch, showing the number of books issued, the number of books returned, and the total revenue generated from book rentals.
 
 ```sql
-CREATE TABLE branch_reports
+WITH branch_performance
 AS
-SELECT 
-    b.branch_id,
-    b.manager_id,
-    COUNT(ist.issued_id) as number_book_issued,
-    COUNT(rs.return_id) as number_of_book_return,
-    SUM(bk.rental_price) as total_revenue
-FROM issued_status as ist
-JOIN 
-employees as e
-ON e.emp_id = ist.issued_emp_id
-JOIN
-branch as b
-ON e.branch_id = b.branch_id
-LEFT JOIN
-return_status as rs
-ON rs.issued_id = ist.issued_id
-JOIN 
-books as bk
-ON ist.issued_book_isbn = bk.isbn
-GROUP BY 1, 2;
-
-SELECT * FROM branch_reports;
+(
+	SELECT 
+		b.branch_id,
+		COUNT(ist.issued_id) as books_issued,
+		COUNT(rs.return_id) as books_returned,
+		SUM(bk.rental_price) as total_rentals
+	FROM branch as b
+	JOIN employees as e
+	ON b.branch_id = e.branch_id
+	JOIN issued_status as ist
+	ON ist.issued_emp_id = e.emp_id
+	LEFT JOIN return_status as rs
+	ON rs.issued_id = ist.issued_id
+	JOIN books as bk
+	ON ist.issued_book_isbn = bk.isbn
+	GROUP BY 1
+)
+SELECT *
+FROM branch_performance;
 ```
 
 **Task 16: CTAS: Create a Table of Active Members**  
